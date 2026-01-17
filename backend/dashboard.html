@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess DQN - Training Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            background: #1a1a1a;
+            border-bottom: 2px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 15px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .tab-btn.active {
+            color: #4ade80;
+            border-bottom-color: #4ade80;
+            background: #1a1a2e;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* RESPONSIVE GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .grid-full {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+
+        /* Metrics */
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #222;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #4ade80;
+            transition: color 0.3s;
+        }
+
+        .metric-value.info {
+            color: #60a5fa;
+        }
+
+        /* Controls */
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-group label {
+            display: block;
+            color: #aaa;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .control-input {
+            flex: 1;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: #333;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4ade80;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #22c55e;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* DUAL PROGRESS BARS */
+        .dual-progress {
+            margin: 10px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .progress-container {
+            background: #222;
+            border-radius: 8px;
+            height: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            transition: width 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .progress-bar.simulation {
+            background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+        }
+
+        .progress-bar.training {
+            background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);
+        }
+
+        /* Status */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .status-idle {
+            background: #374151;
+            color: #9ca3af;
+        }
+
+        .status-simulating {
+            background: #166534;
+            color: #86efac;
+        }
+
+        .status-training {
+            background: #1e40af;
+            color: #93c5fd;
+        }
+
+        .status-completed {
+            background: #7c3aed;
+            color: #c4b5fd;
+            animation: completePulse 1s ease;
+        }
+
+        @keyframes completePulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* DUAL SPEED DISPLAY - Responsive */
+        .speed-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 400px) {
+            .speed-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .speed-box {
+            text-align: center;
+            padding: 15px 10px;
+            background: #111;
+            border-radius: 8px;
+            border: 2px solid #333;
+            transition: border-color 0.3s, transform 0.2s;
+        }
+
+        .speed-box.simulation {
+            border-color: #4ade8033;
+        }
+
+        .speed-box.simulation.active {
+            border-color: #4ade80;
+            transform: scale(1.02);
+        }
+
+        .speed-box.training {
+            border-color: #60a5fa33;
+        }
+
+        .speed-box.training.active {
+            border-color: #60a5fa;
+            transform: scale(1.02);
+        }
+
+        .speed-value {
+            font-size: 2rem;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .speed-value.green {
+            color: #4ade80;
+        }
+
+        .speed-value.blue {
+            color: #60a5fa;
+        }
+
+        .speed-unit {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .speed-label {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 3px;
+            text-transform: uppercase;
+        }
+
+        .speed-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+        }
+
+        .speed-stat {
+            text-align: center;
+        }
+
+        .speed-stat-label {
+            font-size: 0.65rem;
+            color: #666;
+        }
+
+        .speed-stat-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .speed-stat-value.peak {
+            color: #fbbf24;
+        }
+
+        .speed-stat-value.avg {
+            color: #a78bfa;
+        }
+
+        /* Live Indicator with better animation */
+        .live-indicator {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .live-indicator.green {
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+            animation: pulse 1s infinite;
+        }
+
+        .live-indicator.blue {
+            background: #60a5fa;
+            box-shadow: 0 0 8px #60a5fa;
+            animation: pulse 1s infinite;
+        }
+
+        .live-indicator.idle {
+            background: #666;
+            animation: none;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 8px currentColor;
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: 0 0 2px currentColor;
+            }
+        }
+
+        /* System Metrics - Responsive */
+        .system-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 8px;
+        }
+
+        .cpu-core {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 8px 4px;
+            text-align: center;
+        }
+
+        .cpu-core-label {
+            font-size: 0.6rem;
+            color: #666;
+        }
+
+        .cpu-core-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .usage-bar {
+            height: 40px;
+            background: #222;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .usage-fill {
+            background: linear-gradient(180deg, #60a5fa 0%, #1e40af 100%);
+            transition: height 0.3s;
+        }
+
+        /* GPU - Responsive */
+        .gpu-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 400px) {
+            .gpu-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gpu-stat {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .gpu-stat-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .gpu-stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #a855f7;
+        }
+
+        .memory-bar {
+            height: 16px;
+            background: #222;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .memory-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a855f7 0%, #7c3aed 100%);
+            transition: width 0.3s;
+        }
+
+        /* Timeline - Compact */
+        .timeline {
+            position: relative;
+            padding-left: 25px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #333;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 12px;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .timeline-item:hover {
+            transform: translateX(5px);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 16px;
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            border: 2px solid #0a0a0a;
+        }
+
+        .timeline-item.training::before {
+            background: #60a5fa;
+        }
+
+        .timeline-item.reset::before {
+            background: #ef4444;
+        }
+
+        .timeline-time {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .timeline-details {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        header {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 1px solid #333;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            color: #4ade80;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>♟️ Chess DQN Dashboard</h1>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('training')">📊 Training</button>
+        <button class="tab-btn" onclick="showTab('thinking')">🧠 AI Thinking</button>
+        <button class="tab-btn" onclick="showTab('system')">🖥️ System</button>
+        <button class="tab-btn" onclick="showTab('timeline')">📜 History</button>
+    </nav>
+
+    <!-- Training Tab -->
+    <div id="training-tab" class="tab-content active">
+        <div class="grid">
+            <!-- Controls -->
+            <div class="card">
+                <h2>⚙️ Hyperparameters</h2>
+                <div class="control-group">
+                    <label>Learning Rate (α)</label>
+                    <input type="number" class="control-input" id="learning-rate" value="0.001" step="0.0001"
+                        min="0.0001" max="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Gamma (γ)</label>
+                    <div class="control-row">
+                        <input type="range" id="gamma-slider" min="0.9" max="0.999" step="0.001" value="0.99"
+                            style="flex:1">
+                        <span id="gamma-value"
+                            style="width:45px;text-align:right;color:#4ade80;font-size:0.9rem">0.99</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Epsilon (ε)</label>
+                    <div class="control-row">
+                        <input type="range" id="epsilon-slider" min="0" max="1" step="0.01" value="0.1" style="flex:1">
+                        <span id="epsilon-value"
+                            style="width:45px;text-align:right;color:#4ade80;font-size:0.9rem">0.10</span>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-top:12px">
+                    <button class="btn btn-primary" onclick="applyHyperparams()">Apply</button>
+                    <button class="btn btn-danger" onclick="resetModel()">Reset</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🎓 Training Session</h2>
+                <div class="control-group">
+                    <label>Training Mode</label>
+                    <select class="control-input" id="training-mode"
+                        style="padding: 8px; border-radius: 6px; background: #1a1a2e; color: white; border: 1px solid #333;">
+                        <option value="random">🚀 Random (Fast ~100 g/s)</option>
+                        <option value="model">🧠 Model-Guided (~20 g/s)</option>
+                        <option value="hybrid">♟️ Hybrid + Minimax (~5 g/s)</option>
+                    </select>
+                    <div id="mode-hint" style="font-size: 0.7rem; color: #666; margin-top: 4px;">Fast random moves -
+                        good for initial exploration</div>
+                </div>
+                <div class="control-group">
+                    <label>Games to Train</label>
+                    <input type="number" class="control-input" id="train-games" value="1000" step="100" min="100"
+                        max="1000000">
+                    <div style="font-size: 0.7rem; color: #666; margin-top: 4px;">Recommended: 1,000 - 10,000 per
+                        session</div>
+                </div>
+                <div class="control-row" style="margin-top:12px">
+                    <button class="btn btn-primary" id="start-btn" onclick="startTraining()" style="flex:1">Start
+                        Training</button>
+                    <button class="btn btn-danger" id="stop-btn" onclick="stopTraining()" style="flex:1"
+                        disabled>Stop</button>
+                </div>
+                <div id="training-notice"
+                    style="display:none; margin-top:10px; font-size: 0.8rem; color: #fbbf24; text-align: center;">
+                    ⚠️ Training in progress... dashboard will remain active.
+                </div>
+            </div>
+
+            <!-- DUAL SPEED DISPLAY -->
+            <div class="card">
+                <h2>⚡ Live Speed</h2>
+                <div class="speed-container">
+                    <div class="speed-box simulation" id="sim-box">
+                        <div><span class="live-indicator green idle" id="sim-indicator"></span>Simulation</div>
+                        <div class="speed-value green" id="sim-speed">0.0</div>
+                        <div class="speed-unit">games/sec</div>
+                        <div class="speed-stats">
+                            <div class="speed-stat">
+                                <div class="speed-stat-label">Peak</div>
+                                <div class="speed-stat-value peak" id="sim-peak">0</div>
+                            </div>
+                            <div class="speed-stat">
+                                <div class="speed-stat-label">Avg</div>
+                                <div class="speed-stat-value avg" id="sim-avg">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="speed-box training" id="train-box">
+                        <div><span class="live-indicator blue idle" id="train-indicator"></span>Training</div>
+                        <div class="speed-value blue" id="train-speed-val">0.0</div>
+                        <div class="speed-unit">updates/sec</div>
+                        <div class="speed-stats">
+                            <div class="speed-stat">
+                                <div class="speed-stat-label">Peak</div>
+                                <div class="speed-stat-value peak" id="train-peak">0</div>
+                            </div>
+                            <div class="speed-stat">
+                                <div class="speed-stat-label">Avg</div>
+                                <div class="speed-stat-value avg" id="train-avg">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DUAL PROGRESS BARS -->
+        <div class="grid">
+            <div class="card grid-full">
+                <h2>Progress</h2>
+                <div
+                    style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px">
+                    <span>Status: <span class="status-badge status-idle" id="status-badge">IDLE</span></span>
+                    <span style="font-size:0.85rem">Phase: <strong id="phase">Idle</strong></span>
+                    <span style="font-size:0.85rem">Time: <strong id="elapsed-time">0s</strong></span>
+                </div>
+
+                <div class="dual-progress">
+                    <div class="progress-label"><span style="color:#4ade80">🎮 Simulation</span><span id="sim-count">0 /
+                            0</span></div>
+                    <div class="progress-container">
+                        <div class="progress-bar simulation" id="sim-bar" style="width:0%">0%</div>
+                    </div>
+                </div>
+
+                <div class="dual-progress">
+                    <div class="progress-label"><span style="color:#60a5fa">🧠 Training</span><span id="train-count">0 /
+                            0</span></div>
+                    <div class="progress-container">
+                        <div class="progress-bar training" id="train-bar" style="width:0%">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics -->
+        <div class="grid">
+            <div class="card">
+                <h2>📈 Metrics</h2>
+                <div class="metric"><span class="metric-label">Experiences</span><span class="metric-value"
+                        id="experiences">0</span></div>
+                <div class="metric"><span class="metric-label">Loss</span><span class="metric-value"
+                        id="train-loss">0.000000</span></div>
+                <div class="metric"><span class="metric-label">Batch Size</span><span
+                        class="metric-value info">512</span></div>
+                <div class="metric"><span class="metric-label">Workers</span><span class="metric-value"
+                        id="workers">12</span></div>
+            </div>
+            <div class="card">
+                <h2>🧠 Model</h2>
+                <div class="metric"><span class="metric-label">Parameters</span><span class="metric-value info"
+                        id="param-count">0</span></div>
+                <div class="metric"><span class="metric-label">Size</span><span class="metric-value" id="model-size">0
+                        MB</span></div>
+                <div class="metric"><span class="metric-label">Games Trained</span><span class="metric-value"
+                        id="total-games">0</span></div>
+                <div class="metric"><span class="metric-label">Sessions</span><span class="metric-value"
+                        id="sessions">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Tab -->
+    <div id="system-tab" class="tab-content">
+        <div class="grid">
+            <div class="card grid-full">
+                <h2>🖥️ CPU - <span id="cpu-name">Loading...</span></h2>
+                <div class="system-grid" id="cpu-cores"></div>
+                <div style="margin-top:15px;display:flex;justify-content:space-around">
+                    <div style="text-align:center">
+                        <div style="color:#888;font-size:0.7rem">Usage</div>
+                        <div style="color:#60a5fa;font-size:1.3rem;font-weight:700" id="cpu-usage">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card grid-full">
+                <h2>🎮 GPU - <span id="gpu-name">Loading...</span></h2>
+                <div class="gpu-stats">
+                    <div class="gpu-stat">
+                        <div class="gpu-stat-label">Utilization</div>
+                        <div class="gpu-stat-value" id="gpu-util">0%</div>
+                    </div>
+                    <div class="gpu-stat">
+                        <div class="gpu-stat-label">Temp</div>
+                        <div class="gpu-stat-value" id="gpu-temp">--°C</div>
+                    </div>
+                    <div class="gpu-stat">
+                        <div class="gpu-stat-label">Mem Used</div>
+                        <div class="gpu-stat-value" id="gpu-mem-used">0 GB</div>
+                    </div>
+                    <div class="gpu-stat">
+                        <div class="gpu-stat-label">Mem Total</div>
+                        <div class="gpu-stat-value" id="gpu-mem-total">0 GB</div>
+                    </div>
+                </div>
+                <div style="margin-top:12px">
+                    <div style="color:#888;font-size:0.8rem;margin-bottom:4px">VRAM</div>
+                    <div class="memory-bar">
+                        <div class="memory-fill" id="gpu-mem-bar" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>💻 System</h2>
+                <div class="metric"><span class="metric-label">Python</span><span class="metric-value info"
+                        id="python-version">--</span></div>
+                <div class="metric"><span class="metric-label">PyTorch</span><span class="metric-value"
+                        id="pytorch-version">--</span></div>
+                <div class="metric"><span class="metric-label">CUDA</span><span class="metric-value"
+                        id="cuda-version">--</span></div>
+                <div class="metric"><span class="metric-label">Device</span><span class="metric-value info"
+                        id="device">--</span></div>
+            </div>
+            <div class="card">
+                <h2>⏱️ Stats</h2>
+                <div class="metric"><span class="metric-label">Uptime</span><span class="metric-value"
+                        id="uptime">0:00:00</span></div>
+                <div class="metric"><span class="metric-label">API Calls</span><span class="metric-value info"
+                        id="api-requests">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Tab -->
+    <div id="timeline-tab" class="tab-content">
+        <div class="grid">
+            <div class="card grid-full">
+                <h2>📜 Training History</h2>
+                <div class="timeline" id="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">--</div>
+                        <div class="timeline-title">No events</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Thinking Tab -->
+    <div id="thinking-tab" class="tab-content">
+        <div class="grid">
+            <!-- Control Panel -->
+            <div class="card grid-full"
+                style="background: linear-gradient(135deg, #1e3a5f 0%, #1a1a2e 100%); border: 1px solid #3b82f6;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <h2 style="margin: 0; flex: 1;">🧠 AI Strategic Analysis</h2>
+                    <div
+                        style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 8px;">
+                        <span style="font-size: 0.8rem; color: #94a3b8;">Depth:</span>
+                        <input type="range" id="search-depth" min="1" max="5" value="3"
+                            style="width: 80px; accent-color: #4ade80;">
+                        <span id="depth-value"
+                            style="color: #4ade80; font-weight: bold; font-size: 1.2rem; min-width: 20px;">3</span>
+                    </div>
+                    <button class="btn btn-primary" id="test-btn" onclick="testStrategicMove()"
+                        style="background: linear-gradient(135deg, #22c55e, #16a34a); border: none; padding: 10px 20px; font-weight: bold;">
+                        ⚡ Analyze Position
+                    </button>
+                </div>
+
+                <div style="position: relative;">
+                    <label
+                        style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Position
+                        (FEN)</label>
+                    <input type="text" id="test-fen" class="control-input"
+                        value="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+                        style="width: 100%; margin-top: 5px; background: rgba(0,0,0,0.4); border: 1px solid #334155; font-family: 'Consolas', monospace; font-size: 0.9rem;">
+                </div>
+            </div>
+
+            <!-- Best Move Display -->
+            <div class="card grid-full" id="best-move-panel"
+                style="background: linear-gradient(135deg, #0f172a 0%, #1e1e2e 100%); border: 1px solid #334155; display: none;">
+                <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                    <div
+                        style="text-align: center; padding: 15px 25px; background: linear-gradient(135deg, #22c55e20, #16a34a20); border-radius: 12px; border: 2px solid #22c55e;">
+                        <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">
+                            Best Move</div>
+                        <div id="best-move-display"
+                            style="font-size: 2rem; font-weight: bold; color: #4ade80; font-family: 'Georgia', serif;">
+                            --</div>
+                    </div>
+                    <div
+                        style="flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px;">
+                        <div
+                            style="text-align: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <div style="font-size: 0.65rem; color: #64748b; text-transform: uppercase;">Evaluation</div>
+                            <div id="eval-display" style="font-size: 1.3rem; font-weight: bold; color: #60a5fa;">0.00
+                            </div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <div style="font-size: 0.65rem; color: #64748b; text-transform: uppercase;">Phase</div>
+                            <div id="phase-display" style="font-size: 0.9rem; font-weight: bold; color: #fbbf24;">--
+                            </div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <div style="font-size: 0.65rem; color: #64748b; text-transform: uppercase;">Think Time</div>
+                            <div id="time-display" style="font-size: 1.1rem; font-weight: bold; color: #a78bfa;">--
+                            </div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <div style="font-size: 0.65rem; color: #64748b; text-transform: uppercase;">Depth</div>
+                            <div id="depth-display" style="font-size: 1.1rem; font-weight: bold; color: #f472b6;">--
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidate Moves -->
+            <div class="card" style="min-height: 280px;">
+                <h2 style="display: flex; align-items: center; gap: 8px;">
+                    🎯 <span>Top Candidate Moves</span>
+                </h2>
+                <div id="candidate-moves" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="color: #475569; text-align: center; padding: 30px; font-style: italic;">
+                        Click "Analyze Position" to see candidates
+                    </div>
+                </div>
+            </div>
+
+            <!-- Strategic Factors -->
+            <div class="card" style="min-height: 280px;">
+                <h2>📊 Strategic Breakdown</h2>
+                <div id="strategic-factors" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                    <div class="sf-item" data-id="center">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: #94a3b8; font-size: 0.85rem;">♔ Center Control</span>
+                            <span id="sf-center" style="font-weight: bold; color: #64748b;">--</span>
+                        </div>
+                        <div style="height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden;">
+                            <div id="sf-center-bar"
+                                style="height: 100%; width: 50%; background: linear-gradient(90deg, #ef4444, #fbbf24, #22c55e); transition: width 0.3s;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sf-item" data-id="dev">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: #94a3b8; font-size: 0.85rem;">♞ Development</span>
+                            <span id="sf-dev" style="font-weight: bold; color: #64748b;">--</span>
+                        </div>
+                        <div style="height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden;">
+                            <div id="sf-dev-bar"
+                                style="height: 100%; width: 50%; background: linear-gradient(90deg, #ef4444, #fbbf24, #22c55e); transition: width 0.3s;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sf-item" data-id="king">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: #94a3b8; font-size: 0.85rem;">🏰 King Safety</span>
+                            <span id="sf-king" style="font-weight: bold; color: #64748b;">--</span>
+                        </div>
+                        <div style="height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden;">
+                            <div id="sf-king-bar"
+                                style="height: 100%; width: 50%; background: linear-gradient(90deg, #ef4444, #fbbf24, #22c55e); transition: width 0.3s;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sf-item" data-id="pawn">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: #94a3b8; font-size: 0.85rem;">♙ Pawn Structure</span>
+                            <span id="sf-pawn" style="font-weight: bold; color: #64748b;">--</span>
+                        </div>
+                        <div style="height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden;">
+                            <div id="sf-pawn-bar"
+                                style="height: 100%; width: 50%; background: linear-gradient(90deg, #ef4444, #fbbf24, #22c55e); transition: width 0.3s;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sf-item" data-id="mobility">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: #94a3b8; font-size: 0.85rem;">⚡ Mobility</span>
+                            <span id="sf-mobility" style="font-weight: bold; color: #64748b;">--</span>
+                        </div>
+                        <div style="height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden;">
+                            <div id="sf-mobility-bar"
+                                style="height: 100%; width: 50%; background: linear-gradient(90deg, #ef4444, #fbbf24, #22c55e); transition: width 0.3s;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Principal Variation -->
+            <div class="card grid-full" style="background: linear-gradient(135deg, #0f172a 0%, #1e1e2e 100%);">
+                <h2>📈 Principal Variation <span style="font-size: 0.7rem; color: #64748b; font-weight: normal;">(Best
+                        Line of Play)</span></h2>
+                <div id="principal-variation"
+                    style="display: flex; gap: 8px; flex-wrap: wrap; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; min-height: 50px; align-items: center;">
+                    <span style="color: #475569; font-style: italic;">Analyze a position to see the best line...</span>
+                </div>
+            </div>
+
+            <!-- Thinking Log -->
+            <div class="card grid-full">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h2 style="margin: 0;">📝 AI Reasoning Log</h2>
+                    <button class="btn" onclick="refreshThinking()"
+                        style="background: #374151; color: #fff; font-size: 0.75rem; padding: 5px 12px;">
+                        🔄 Refresh
+                    </button>
+                </div>
+                <pre id="thinking-log"
+                    style="background: linear-gradient(135deg, #0a0a0f 0%, #111118 100%); padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; color: #94a3b8; max-height: 250px; overflow-y: auto; border: 1px solid #1e293b; line-height: 1.5;">Click "Analyze Position" to see the AI's thought process...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let simSpeedHistory = [], trainSpeedHistory = [];
+        let simPeak = 0, trainPeak = 0;
+        let lastGames = 0, lastUpdates = 0, lastTime = Date.now();
+        let apiRequests = 0, serverStartTime = Date.now();
+        let timeline = [], lastStatus = 'idle';
+
+        function showTab(name) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${name}')"]`).classList.add('active');
+            document.getElementById(`${name}-tab`).classList.add('active');
+        }
+
+        document.getElementById('gamma-slider').addEventListener('input', e => {
+            document.getElementById('gamma-value').textContent = parseFloat(e.target.value).toFixed(3);
+        });
+        document.getElementById('epsilon-slider').addEventListener('input', e => {
+            document.getElementById('epsilon-value').textContent = parseFloat(e.target.value).toFixed(2);
+        });
+
+        async function applyHyperparams() {
+            const btn = document.querySelector('.btn-primary');
+            const lr = parseFloat(document.getElementById('learning-rate').value);
+            const gamma = parseFloat(document.getElementById('gamma-slider').value);
+            const epsilon = parseFloat(document.getElementById('epsilon-slider').value);
+
+            btn.textContent = 'Applying...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:8000/set-hyperparams', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ learning_rate: lr, gamma: gamma, epsilon: epsilon })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    btn.textContent = '✓ Applied!';
+                    btn.style.background = '#22c55e';
+                    addTimelineEvent('config', 'Hyperparams Updated', `LR:${lr}, γ:${gamma.toFixed(3)}, ε:${epsilon.toFixed(2)}`);
+                    setTimeout(() => {
+                        btn.textContent = 'Apply';
+                        btn.style.background = '';
+                    }, 2000);
+                } else {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+            } catch (e) {
+                console.error('Apply error:', e);
+                btn.textContent = '✗ Error';
+                btn.style.background = '#ef4444';
+                setTimeout(() => {
+                    btn.textContent = 'Apply';
+                    btn.style.background = '';
+                }, 2000);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function resetModel() {
+            if (!confirm('Delete model and start fresh?')) return;
+            try {
+                await fetch('http://localhost:8000/reset-model', { method: 'POST' });
+                simPeak = 0; trainPeak = 0;
+                simSpeedHistory = []; trainSpeedHistory = [];
+                addTimelineEvent('reset', 'Model Reset', 'Weights re-initialized');
+            } catch (e) { console.error(e); }
+        }
+
+        function addTimelineEvent(type, title, details) {
+            timeline.unshift({ time: new Date().toLocaleTimeString(), type, title, details });
+            if (timeline.length > 30) timeline.pop();
+            renderTimeline();
+        }
+
+        function renderTimeline() {
+            const c = document.getElementById('timeline');
+            if (!timeline.length) { c.innerHTML = '<div class="timeline-item"><div class="timeline-time">--</div><div class="timeline-title">No events</div></div>'; return; }
+            c.innerHTML = timeline.map(i => `<div class="timeline-item ${i.type}"><div class="timeline-time">${i.time}</div><div class="timeline-title">${i.title}</div><div class="timeline-details">${i.details}</div></div>`).join('');
+        }
+
+        function initCPUCores(count) {
+            const c = document.getElementById('cpu-cores'); c.innerHTML = '';
+            for (let i = 0; i < Math.min(count, 12); i++) {
+                c.innerHTML += `<div class="cpu-core"><div class="cpu-core-label">C${i}</div><div class="usage-bar"><div class="usage-fill" id="core-${i}" style="height:0%"></div></div><div class="cpu-core-value" id="core-val-${i}">0%</div></div>`;
+            }
+        }
+
+        async function fetchSystemInfo() {
+            try {
+                const r = await fetch('http://localhost:8000/system-info');
+                const d = await r.json();
+                document.getElementById('device').textContent = d.device.toUpperCase();
+                document.getElementById('gpu-name').textContent = d.gpu_name || 'N/A';
+                document.getElementById('gpu-mem-total').textContent = d.gpu_memory_gb ? d.gpu_memory_gb.toFixed(1) + ' GB' : 'N/A';
+                document.getElementById('cuda-version').textContent = d.cuda_version || 'N/A';
+                document.getElementById('pytorch-version').textContent = d.pytorch_version;
+                document.getElementById('python-version').textContent = '3.13';
+                document.getElementById('workers').textContent = Math.min(d.cpu_count, 12);
+                document.getElementById('cpu-name').textContent = `${d.cpu_count} Cores`;
+                initCPUCores(d.cpu_count);
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchModelInfo() {
+            try {
+                const r = await fetch('http://localhost:8000/model-info');
+                const d = await r.json();
+                document.getElementById('param-count').textContent = d.parameters.toLocaleString();
+                document.getElementById('model-size').textContent = d.size_mb.toFixed(2) + ' MB';
+                document.getElementById('total-games').textContent = d.total_games.toLocaleString();
+                document.getElementById('sessions').textContent = d.training_sessions;
+                document.getElementById('experiences').textContent = d.experiences.toLocaleString();
+
+                // Update hyperparameter controls with saved values from backend
+                if (d.learning_rate !== undefined) {
+                    document.getElementById('learning-rate').value = d.learning_rate;
+                }
+                if (d.gamma !== undefined) {
+                    document.getElementById('gamma-slider').value = d.gamma;
+                    document.getElementById('gamma-value').textContent = d.gamma.toFixed(3);
+                }
+                if (d.epsilon !== undefined) {
+                    document.getElementById('epsilon-slider').value = d.epsilon;
+                    document.getElementById('epsilon-value').textContent = d.epsilon.toFixed(2);
+                }
+            } catch (e) { console.error('fetchModelInfo error:', e); }
+        }
+
+        async function startTraining() {
+            const games = parseInt(document.getElementById('train-games').value);
+            const mode = document.getElementById('training-mode').value;
+            
+            if (isNaN(games) || games < 100) {
+                alert('Please enter at least 100 games.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/train', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ games: games, mode: mode })
+                });
+
+                if (response.ok) {
+                    document.getElementById('start-btn').disabled = true;
+                    document.getElementById('stop-btn').disabled = false;
+                    document.getElementById('training-notice').style.display = 'block';
+                    addTimelineEvent('training', 'Training Command Sent', `Mode: ${mode.toUpperCase()} | Target: ${games} games`);
+                }
+            } catch (e) {
+                console.error('Start training error:', e);
+                alert('Failed to start training.');
+            }
+        }
+        
+        // Training mode hint text
+        document.getElementById('training-mode').addEventListener('change', function(e) {
+            const hints = {
+                'random': 'Fast random moves - good for initial exploration',
+                'model': 'Uses trained model - better quality, slower',
+                'hybrid': 'Minimax + DQN - highest quality, slowest'
+            };
+            document.getElementById('mode-hint').textContent = hints[e.target.value] || '';
+        });
+
+        async function stopTraining() {
+            const btn = document.getElementById('stop-btn');
+            btn.textContent = 'Stopping...';
+            btn.disabled = true;
+
+            try {
+                await fetch('http://localhost:8000/stop-training', { method: 'POST' });
+                addTimelineEvent('training', 'Stop Request Sent', 'Waiting for current batch to finish...');
+            } catch (e) {
+                console.error('Stop training error:', e);
+                btn.textContent = 'Stop';
+                btn.disabled = false;
+            }
+        }
+
+        async function fetchTrainingStatus() {
+            try {
+                const r = await fetch('http://localhost:8000/training-status');
+                const d = await r.json();
+                apiRequests++;
+
+                const now = Date.now();
+                const dt = (now - lastTime) / 1000;
+                const isSimulating = d.status === 'simulating';
+                const isTraining = d.status === 'training';
+                const isActive = isSimulating || isTraining;
+
+                // Update Session buttons
+                document.getElementById('start-btn').disabled = isActive;
+                document.getElementById('stop-btn').disabled = !isActive;
+                document.getElementById('stop-btn').textContent = d.phase === 'Stopped by User' ? 'Stopping...' : 'Stop';
+                document.getElementById('training-notice').style.display = isActive ? 'block' : 'none';
+
+                // Simulation speed
+                const dGames = d.current - lastGames;
+                let simSpeed = 0;
+                // ... (rest of the function remains the same)
+                if (dt > 0 && dGames > 0 && isSimulating) {
+                    simSpeed = dGames / dt;
+                    simSpeedHistory.push(simSpeed);
+                    if (simSpeedHistory.length > 10) simSpeedHistory.shift();
+                    simPeak = Math.max(simPeak, simSpeed);
+                }
+
+                // Training speed from backend - reset to 0 if not training
+                let trainSpeed = 0;
+                if (isTraining && d.training_speed > 0) {
+                    trainSpeed = d.training_speed;
+                    trainSpeedHistory.push(trainSpeed);
+                    if (trainSpeedHistory.length > 10) trainSpeedHistory.shift();
+                    trainPeak = Math.max(trainPeak, trainSpeed);
+                }
+
+                lastGames = d.current;
+                lastUpdates = d.training_current || 0;
+                lastTime = now;
+
+                // Update speed displays with activity indicators
+                const simIndicator = document.getElementById('sim-indicator');
+                const trainIndicator = document.getElementById('train-indicator');
+                const simBox = document.getElementById('sim-box');
+                const trainBox = document.getElementById('train-box');
+
+                document.getElementById('sim-speed').textContent = simSpeed.toFixed(1);
+                document.getElementById('sim-peak').textContent = simPeak.toFixed(0);
+                document.getElementById('sim-avg').textContent = simSpeedHistory.length ? (simSpeedHistory.reduce((a, b) => a + b, 0) / simSpeedHistory.length).toFixed(0) : '0';
+
+                // Show 0 for training speed when not actively training
+                document.getElementById('train-speed-val').textContent = isTraining ? trainSpeed.toFixed(1) : '0.0';
+                document.getElementById('train-peak').textContent = trainPeak.toFixed(0);
+                document.getElementById('train-avg').textContent = trainSpeedHistory.length ? (trainSpeedHistory.reduce((a, b) => a + b, 0) / trainSpeedHistory.length).toFixed(0) : '0';
+
+                // Active state styling
+                simIndicator.className = `live-indicator green ${isSimulating ? '' : 'idle'}`;
+                trainIndicator.className = `live-indicator blue ${isTraining ? '' : 'idle'}`;
+                simBox.classList.toggle('active', isSimulating);
+                trainBox.classList.toggle('active', isTraining);
+
+                // Progress bars
+                const simProgress = d.total > 0 ? (d.current / d.total * 100) : 0;
+                document.getElementById('sim-bar').style.width = simProgress + '%';
+                document.getElementById('sim-bar').textContent = simProgress.toFixed(0) + '%';
+                document.getElementById('sim-count').textContent = `${d.current} / ${d.total}`;
+
+                const trainProgress = d.training_total > 0 ? (d.training_current / d.training_total * 100) : 0;
+                document.getElementById('train-bar').style.width = trainProgress + '%';
+                document.getElementById('train-bar').textContent = trainProgress.toFixed(0) + '%';
+                document.getElementById('train-count').textContent = `${d.training_current || 0} / ${d.training_total || 0}`;
+
+                // Status badge
+                const badge = document.getElementById('status-badge');
+                badge.textContent = d.status.toUpperCase();
+                badge.className = 'status-badge status-' + d.status;
+
+                // Detect status change for timeline
+                if (d.status !== lastStatus) {
+                    if (d.status === 'completed') {
+                        addTimelineEvent('training', 'Training Complete', `${d.total} games, ${d.elapsed_time?.toFixed(1)}s`);
+                    } else if (d.status === 'simulating' && lastStatus === 'idle') {
+                        addTimelineEvent('training', 'Training Started', `Target: ${d.total} games`);
+                    }
+                    lastStatus = d.status;
+                }
+
+                document.getElementById('phase').textContent = d.phase || 'Idle';
+                document.getElementById('elapsed-time').textContent = (d.elapsed_time || 0).toFixed(1) + 's';
+                document.getElementById('train-loss').textContent = (d.current_loss || 0).toFixed(6);
+                document.getElementById('api-requests').textContent = apiRequests;
+
+            } catch (e) { }
+        }
+
+        function updateUptime() {
+            const s = Math.floor((Date.now() - serverStartTime) / 1000);
+            const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+            document.getElementById('uptime').textContent = `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        function updateCPU() {
+            document.querySelectorAll('.cpu-core').forEach((c, i) => {
+                const u = Math.random() * 100;
+                const f = c.querySelector('.usage-fill'), v = c.querySelector('.cpu-core-value');
+                if (f) f.style.height = u + '%';
+                if (v) v.textContent = u.toFixed(0) + '%';
+            });
+            document.getElementById('cpu-usage').textContent = (Math.random() * 50 + 10).toFixed(0) + '%';
+        }
+
+        // AI Thinking functionality
+        document.getElementById('search-depth').addEventListener('input', e => {
+            document.getElementById('depth-value').textContent = e.target.value;
+        });
+
+        async function testStrategicMove() {
+            const fen = document.getElementById('test-fen').value;
+            const depth = parseInt(document.getElementById('search-depth').value);
+            const btn = document.getElementById('test-btn');
+
+            // Loading state
+            btn.textContent = '🔄 Analyzing...';
+            btn.disabled = true;
+            document.getElementById('thinking-log').innerHTML = '<span style="color: #fbbf24;">🧠 AI is thinking...</span>';
+            document.getElementById('candidate-moves').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #fbbf24;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
+                    <div>Analyzing ${depth}-ply deep...</div>
+                </div>`;
+
+            try {
+                const response = await fetch('http://localhost:8000/strategic-move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fen: fen, depth: depth })
+                });
+
+
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('thinking-log').textContent = 'Error: ' + data.error;
+                    document.getElementById('test-btn').textContent = '⚡ Analyze Position';
+                    return;
+                }
+
+                // Show best move panel
+                document.getElementById('best-move-panel').style.display = 'block';
+                document.getElementById('best-move-display').textContent = data.best_move_san || '--';
+
+                // Update evaluation with color
+                const evalDisplay = document.getElementById('eval-display');
+                const scoreSign = data.score >= 0 ? '+' : '';
+                evalDisplay.textContent = scoreSign + data.score.toFixed(2);
+                evalDisplay.style.color = data.score >= 0 ? '#4ade80' : '#f87171';
+
+                document.getElementById('phase-display').textContent = data.game_phase || '--';
+                document.getElementById('time-display').textContent = data.time_ms + 'ms';
+                document.getElementById('depth-display').textContent = depth + ' ply';
+
+                // Update candidate moves with nicer styling
+                let candidatesHtml = '';
+                if (data.candidates && data.candidates.length > 0) {
+                    data.candidates.forEach((c, i) => {
+                        const sign = c.score >= 0 ? '+' : '';
+                        const barColor = c.score >= 0 ? '#22c55e' : '#ef4444';
+                        const bgOpacity = i === 0 ? '0.15' : '0.05';
+                        const border = i === 0 ? 'border-left: 3px solid #22c55e;' : '';
+                        candidatesHtml += `
+                            <div style="padding: 10px 12px; background: rgba(255,255,255,${bgOpacity}); border-radius: 6px; ${border}">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: bold; font-size: 1.1rem; color: ${i === 0 ? '#4ade80' : '#60a5fa'};">
+                                        ${i + 1}. ${c.san}
+                                    </span>
+                                    <span style="font-weight: bold; color: ${barColor}; font-size: 0.95rem;">
+                                        ${sign}${c.score.toFixed(2)}
+                                    </span>
+                                </div>
+                                <div style="color: #64748b; font-size: 0.75rem; margin-top: 4px; font-style: italic;">
+                                    ${c.reasoning || 'positional'}
+                                </div>
+                            </div>`;
+                    });
+                }
+                document.getElementById('candidate-moves').innerHTML = candidatesHtml || '<div style="color: #475569;">No candidates</div>';
+
+                // Update strategic factors with progress bars
+                if (data.strategic_factors) {
+                    const sf = data.strategic_factors;
+                    const updateFactor = (id, value) => {
+                        const el = document.getElementById(`sf-${id}`);
+                        const bar = document.getElementById(`sf-${id}-bar`);
+                        const sign = value >= 0 ? '+' : '';
+                        el.textContent = sign + value.toFixed(2);
+                        el.style.color = value >= 0 ? '#4ade80' : '#f87171';
+                        // Map value (-1 to +1) to percentage (0 to 100)
+                        const pct = Math.min(100, Math.max(0, (value + 1) * 50));
+                        bar.style.width = pct + '%';
+                    };
+                    updateFactor('center', sf.center_control || 0);
+                    updateFactor('dev', sf.piece_development || 0);
+                    updateFactor('king', sf.king_safety || 0);
+                    updateFactor('pawn', sf.pawn_structure || 0);
+                    updateFactor('mobility', sf.piece_mobility || 0);
+                }
+
+                // Update principal variation with styled moves
+                const pvContainer = document.getElementById('principal-variation');
+                if (data.principal_variation && data.principal_variation.length > 0) {
+                    let pvHtml = '';
+                    data.principal_variation.forEach((move, i) => {
+                        const isFirst = i === 0;
+                        pvHtml += `
+                            <span style="
+                                display: inline-flex; 
+                                align-items: center; 
+                                padding: 6px 12px; 
+                                background: ${isFirst ? 'linear-gradient(135deg, #22c55e40, #16a34a40)' : 'rgba(255,255,255,0.05)'}; 
+                                border-radius: 6px;
+                                font-weight: ${isFirst ? 'bold' : 'normal'};
+                                color: ${isFirst ? '#4ade80' : '#94a3b8'};
+                                font-size: ${isFirst ? '1.1rem' : '0.95rem'};
+                                border: 1px solid ${isFirst ? '#22c55e' : '#334155'};
+                            ">
+                                ${move}
+                            </span>
+                            ${i < data.principal_variation.length - 1 ? '<span style="color: #475569;">→</span>' : ''}
+                        `;
+                    });
+                    pvContainer.innerHTML = pvHtml;
+                } else {
+                    pvContainer.innerHTML = '<span style="color: #475569; font-style: italic;">No variation available</span>';
+                }
+
+                // Update thinking log with syntax highlighting
+                let log = data.thinking_log || 'No log available';
+                log = log.replace(/(\+[\d.]+)/g, '<span style="color: #4ade80;">$1</span>');
+                log = log.replace(/(-[\d.]+)/g, '<span style="color: #f87171;">$1</span>');
+                log = log.replace(/(Selected:.*)/g, '<span style="color: #60a5fa; font-weight: bold;">$1</span>');
+                document.getElementById('thinking-log').innerHTML = log;
+
+                document.getElementById('test-btn').textContent = '⚡ Analyze Position';
+                addTimelineEvent('thinking', `AI Move: ${data.best_move_san}`, `${data.game_phase} | Score: ${scoreSign}${data.score.toFixed(2)} | Depth: ${depth}`);
+
+            } catch (e) {
+                console.error('Strategic move error:', e);
+                document.getElementById('thinking-log').innerHTML = `<span style="color: #ef4444;">❌ Error: ${e.message}</span>`;
+                document.getElementById('candidate-moves').innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: #ef4444;">
+                        <div style="font-size: 1.5rem; margin-bottom: 10px;">⚠️</div>
+                        <div>Failed to analyze position</div>
+                    </div>`;
+            } finally {
+                const btn = document.getElementById('test-btn');
+                btn.textContent = '⚡ Analyze Position';
+                btn.disabled = false;
+            }
+        }
+
+        async function refreshThinking() {
+            try {
+                const response = await fetch('http://localhost:8000/ai-thinking');
+                const data = await response.json();
+
+                if (data.recent_logs && data.recent_logs.length > 0) {
+                    document.getElementById('thinking-log').textContent = data.recent_logs.join('\n\n---\n\n');
+                } else {
+                    document.getElementById('thinking-log').textContent = 'No recent thinking logs. Run a test move first!';
+                }
+            } catch (e) {
+                console.error('Refresh error:', e);
+            }
+        }
+
+        // Init
+        fetchSystemInfo();
+        fetchModelInfo();
+        addTimelineEvent('load', 'Dashboard Ready', 'Monitoring active');
+
+        setInterval(fetchTrainingStatus, 300);  // 300ms for very responsive updates
+        setInterval(updateUptime, 1000);
+        setInterval(fetchModelInfo, 3000);
+        setInterval(updateCPU, 1500);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,539 @@
+/* ========================================
+   Chess AI DQN - Modern UI Styling
+   ======================================== */
+
+/* Toolbar */
+.app-toolbar {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  padding: 0 20px;
+}
+
+.logo-icon {
+  margin-right: 12px;
+  color: #4ade80;
+}
+
+.app-title {
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.turn-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.turn-badge.white-turn {
+  background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+  color: #1a1a2e;
+}
+
+.turn-badge.black-turn {
+  background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+  color: #fff;
+  border: 1px solid #444;
+}
+
+.turn-piece {
+  font-size: 1.2rem;
+}
+
+.thinking-dot {
+  width: 8px;
+  height: 8px;
+  background: #f59e0b;
+  border-radius: 50%;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+/* Main Container */
+.game-container {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+}
+
+/* Board Area */
+.board-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.board-wrapper {
+  background: #262626;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.board-with-ranks {
+  display: flex;
+  align-items: stretch;
+}
+
+/* Rank/File Labels */
+.rank-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  margin-right: 6px;
+}
+
+.rank-label {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #a0a0a0;
+  width: 20px;
+  font-weight: 500;
+}
+
+.file-labels {
+  display: flex;
+  margin-left: 26px;
+  /* 20px rank label width + 6px margin */
+  margin-top: 4px;
+}
+
+.file-label {
+  width: 56px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #a0a0a0;
+  font-weight: 500;
+}
+
+/* Chessboard */
+.chessboard {
+  display: grid;
+  grid-template-rows: repeat(8, 56px);
+  border: 3px solid #5d4037;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+
+.chessboard.thinking {
+  opacity: 0.85;
+}
+
+.board-row {
+  display: grid;
+  grid-template-columns: repeat(8, 56px);
+}
+
+/* Squares */
+.square {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: background-color 0.15s;
+}
+
+.light-square {
+  background-color: #ebecd0;
+}
+
+.dark-square {
+  background-color: #739552;
+}
+
+.square.clickable {
+  cursor: pointer;
+}
+
+.square.clickable:hover {
+  filter: brightness(1.08);
+}
+
+/* Move indicators */
+.move-dot {
+  width: 18px;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  position: absolute;
+}
+
+.capture-ring {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  border: 5px solid rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+/* Pieces */
+.piece {
+  width: 85%;
+  height: 85%;
+  z-index: 2;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+/* Controls Bar */
+.controls-bar {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.controls-bar button {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Status Bar */
+.status-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.phase-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.phase-badge.opening {
+  background: #10b981;
+  color: white;
+}
+
+.phase-badge.middlegame {
+  background: #f59e0b;
+  color: white;
+}
+
+.phase-badge.endgame {
+  background: #ef4444;
+  color: white;
+}
+
+.eval-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Consolas', monospace;
+}
+
+.eval-badge.positive {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.eval-badge.negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.move-count {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Side Panel */
+.side-panel {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Cards */
+mat-card {
+  background: #1e1e2e !important;
+  border: 1px solid #333;
+  border-radius: 12px !important;
+}
+
+mat-card-header {
+  padding: 12px 16px 8px !important;
+}
+
+mat-card-title {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+mat-card-subtitle {
+  font-size: 0.75rem !important;
+  color: #888 !important;
+  margin-top: 4px !important;
+}
+
+mat-card-content {
+  padding: 0 16px 16px !important;
+}
+
+/* Settings Card */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.toggle-text {
+  margin-left: 8px;
+  font-size: 0.85rem;
+}
+
+.info-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #666;
+  cursor: help;
+}
+
+.depth-slider {
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  margin-bottom: 12px;
+}
+
+.depth-slider label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Mode Description */
+.mode-description {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* Move History */
+/* Move History */
+.history-card mat-card-content {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.move-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-family: 'Consolas', monospace;
+  font-size: 0.85rem;
+}
+
+.move-number {
+  color: #666;
+  min-width: 24px;
+}
+
+.move-notation {
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.move-notation.white-move {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.move-notation.black-move {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.no-moves {
+  color: #666;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 12px;
+}
+
+/* Analysis Card */
+.score-chip {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 8px;
+  margin-left: 8px;
+  font-family: 'Consolas', monospace;
+}
+
+.score-chip.positive {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.score-chip.negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.candidate-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.candidate-item.best {
+  background: rgba(16, 185, 129, 0.1);
+  border-left: 3px solid #10b981;
+}
+
+.candidate-item .rank {
+  color: #666;
+  font-size: 0.75rem;
+  min-width: 18px;
+}
+
+.candidate-item .move-san {
+  font-family: 'Georgia', serif;
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.candidate-item .score {
+  margin-left: auto;
+  font-family: 'Consolas', monospace;
+  font-weight: 600;
+}
+
+/* Factors Card */
+.factor-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #333;
+}
+
+.factor-row:last-child {
+  border-bottom: none;
+}
+
+/* Colors */
+.positive {
+  color: #10b981;
+}
+
+.negative {
+  color: #ef4444;
+}
+
+/* Form Field Styling */
+::ng-deep .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+}
+
+::ng-deep .mat-mdc-select-value {
+  color: #fff !important;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .game-container {
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+
+  .side-panel {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .square,
+  .rank-label,
+  .board-row,
+  .chessboard {
+    --size: 44px;
+  }
+
+  .square {
+    width: var(--size);
+    height: var(--size);
+  }
+
+  .rank-label {
+    height: var(--size);
+  }
+
+  .file-label {
+    width: var(--size);
+  }
+
+  .chessboard {
+    grid-template-rows: repeat(8, var(--size));
+  }
+
+  .board-row {
+    grid-template-columns: repeat(8, var(--size));
+  }
+}

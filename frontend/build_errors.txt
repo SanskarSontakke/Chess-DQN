@@ -1,0 +1,37 @@
+﻿[33mΓ¥»[39m Building...
+[32mΓ£ö[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[2m | [22m[1mEstimated transfer size[22m
+[32mmain-DS6UQS6R.js[39m   [2m | [22m[2mmain[22m         [2m | [22m[36m585.94 kB[39m[2m | [22m              [36m122.00 kB[39m
+[32mchunk-XIPQ3UXS.js[39m  [2m | [22m[2m-[22m            [2m | [22m[36m166.09 kB[39m[2m | [22m               [36m48.77 kB[39m
+[32mstyles-2PO2ZQ5E.css[39m[2m | [22m[2mstyles[22m       [2m | [22m[36m101.14 kB[39m[2m | [22m                [36m7.72 kB[39m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m[1m[93m853.17 kB[39m[22m[2m | [22m              [1m178.49 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[2m | [22m[1mEstimated transfer size[22m
+[32mchunk-PBJYNXDW.js[39m  [2m | [22m[2mbrowser[22m      [2m | [22m [36m67.75 kB[39m[2m | [22m               [36m17.78 kB[39m
+
+Application bundle generation complete. [3.088 seconds] - 2026-01-15T16:21:54.425Z
+
+node.exe : [1m[33m[33mΓû▓ 
+[43;33m[[43;30mWARNING[43;33m][0m [1mbundle 
+initial exceeded maximum budget. Budget 500.00 kB 
+was not met by 353.17 kB with a total of 853.17 
+kB.[0m
+At C:\Program Files\nodejs\npx.ps1:29 char:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([1m[3 
+   3m[33mΓ... 853.17 kB.[0m:String) [], RemoteExc  
+  eption
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m 
+[1msrc/app/app.component.css exceeded maximum 
+budget. Budget 4.00 kB was not met by 1.90 kB with a 
+total of 5.90 kB.[0m
+
+[39m[22m
+Output location: C:\Users\SanskarSontakke\Chess DQN\frontend\dist\frontend
+
