@@ -1085,7 +1085,7 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch('http://localhost:8000/set-hyperparams', {
+                const response = await fetch('/set-hyperparams', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ learning_rate: lr, gamma: gamma, epsilon: epsilon })
@@ -1119,7 +1119,7 @@
         async function resetModel() {
             if (!confirm('Delete model and start fresh?')) return;
             try {
-                await fetch('http://localhost:8000/reset-model', { method: 'POST' });
+                await fetch('/reset-model', { method: 'POST' });
                 simPeak = 0; trainPeak = 0;
                 simSpeedHistory = []; trainSpeedHistory = [];
                 addTimelineEvent('reset', 'Model Reset', 'Weights re-initialized');
@@ -1147,7 +1147,7 @@
 
         async function fetchSystemInfo() {
             try {
-                const r = await fetch('http://localhost:8000/system-info');
+                const r = await fetch('/system-info');
                 const d = await r.json();
                 document.getElementById('device').textContent = d.device.toUpperCase();
                 document.getElementById('gpu-name').textContent = d.gpu_name || 'N/A';
@@ -1163,7 +1163,7 @@
 
         async function fetchModelInfo() {
             try {
-                const r = await fetch('http://localhost:8000/model-info');
+                const r = await fetch('/model-info');
                 const d = await r.json();
                 document.getElementById('param-count').textContent = d.parameters.toLocaleString();
                 document.getElementById('model-size').textContent = d.size_mb.toFixed(2) + ' MB';
@@ -1189,14 +1189,14 @@
         async function startTraining() {
             const games = parseInt(document.getElementById('train-games').value);
             const mode = document.getElementById('training-mode').value;
-            
+
             if (isNaN(games) || games < 100) {
                 alert('Please enter at least 100 games.');
                 return;
             }
 
             try {
-                const response = await fetch('http://localhost:8000/train', {
+                const response = await fetch('/train', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ games: games, mode: mode })
@@ -1213,9 +1213,9 @@
                 alert('Failed to start training.');
             }
         }
-        
+
         // Training mode hint text
-        document.getElementById('training-mode').addEventListener('change', function(e) {
+        document.getElementById('training-mode').addEventListener('change', function (e) {
             const hints = {
                 'random': 'Fast random moves - good for initial exploration',
                 'model': 'Uses trained model - better quality, slower',
@@ -1230,7 +1230,7 @@
             btn.disabled = true;
 
             try {
-                await fetch('http://localhost:8000/stop-training', { method: 'POST' });
+                await fetch('/stop-training', { method: 'POST' });
                 addTimelineEvent('training', 'Stop Request Sent', 'Waiting for current batch to finish...');
             } catch (e) {
                 console.error('Stop training error:', e);
@@ -1241,7 +1241,7 @@
 
         async function fetchTrainingStatus() {
             try {
-                const r = await fetch('http://localhost:8000/training-status');
+                const r = await fetch('/training-status');
                 const d = await r.json();
                 apiRequests++;
 
@@ -1373,7 +1373,7 @@
                 </div>`;
 
             try {
-                const response = await fetch('http://localhost:8000/strategic-move', {
+                const response = await fetch('/strategic-move', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ fen: fen, depth: depth })
@@ -1503,7 +1503,7 @@
 
         async function refreshThinking() {
             try {
-                const response = await fetch('http://localhost:8000/ai-thinking');
+                const response = await fetch('/ai-thinking');
                 const data = await response.json();
 
                 if (data.recent_logs && data.recent_logs.length > 0) {
