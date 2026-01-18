@@ -155,13 +155,29 @@ def simulate_game_hybrid(
     
     model.eval()
     
+    # Transposition table to cache model evaluations (fen -> score)
+    # This avoids re-running the GPU model for the same position
+    eval_cache = {}
+    
     def minimax_evaluate(b: chess.Board, d: int, alpha: float, beta: float, maximizing: bool) -> float:
         """Minimax with alpha-beta pruning using DQN for leaf evaluation."""
+        fen = b.fen()
+        
+        # Check cache/transposition table first
+        # We only cache evaluation results (d=0), not intermediate search results 
+        # because depth might vary (though here it's fixed recursion).
+        # For simplicity, we cache ANY position we evaluate with the model.
         if d == 0 or b.is_game_over():
+            if fen in eval_cache:
+                return eval_cache[fen]
+                
             # Leaf node: use neural network for evaluation
-            tensor = torch.from_numpy(fen_to_tensor_fast(b.fen())).unsqueeze(0).to(device)
+            # Optimized: check cache before tensor conversion
+            tensor = torch.from_numpy(fen_to_tensor_fast(fen)).unsqueeze(0).to(device)
             with torch.no_grad():
-                return model(tensor).item()
+                score = model(tensor).item()
+                eval_cache[fen] = score
+                return score
         
         legal_moves = list(b.legal_moves)
         
