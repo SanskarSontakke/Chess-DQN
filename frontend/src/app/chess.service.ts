@@ -40,7 +40,7 @@ export interface BasicMoveResponse {
 })
 export class ChessService {
   // private apiUrl = 'http://localhost:8000';
-  private apiUrl = 'https://pacifical-prediligently-shanika.ngrok-free.dev';
+  private apiUrl = 'http://localhost:8000';
 
   constructor(private http: HttpClient) { }
 
